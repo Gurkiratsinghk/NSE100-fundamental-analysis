@@ -22,18 +22,18 @@ A Python-based tool in Replit to scrape financial data for NIFTY100 companies fr
 
 Steps Taken
 
-1. Data Setup:
+## 1. Data Setup:
 * CSV Import: import a CSV file (NSE data/nifty100_companies.csv) containing company names, industry sectors, and stock tickers for NIFTY100 companies.
 * DataFrame Creation: The relevant columns (Company Name, Industry, and Symbol) are extracted and stored in a Pandas DataFrame (NSE data/companies.csv).
 
 
-2. Web Scraping:
+## 2. Web Scraping:
 * Scrape Financial Data: Write a script (scrape_financials.py) to scrape financial data of each company's page on Screener.in. But there are a lot of improvements that needs to be done here. 
 * Handling Errors: Implemented error handling to manage cases where certain data might be missing or the HTML structure doesn't match expectations.
 * Dynamic Extraction: We dynamically extracted key financial metrics (like Sales, Expenses, Operating Profit, etc.) for each year listed on the website.
 * Data Storage: The scraped data was stored in a Pandas DataFrame and then exported to a CSV file (financials.csv) for future analysis. [This is to be implemented]
 
 
-3. Directory Structure:
+## 3. Directory Structure:
 * Data: Created a “data/“ directory to store CSV files.
 * Scripts: Stored Python scripts in a “scripts/“ directory.
