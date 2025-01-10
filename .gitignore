@@ -1,7 +1,10 @@
 nse100_fa/
 *.log
-ARE&M_balance_sheet_20241111.csv
-ARE&M_cash_flow_20241111.csv
-ARE&M_growth_metrics_20241111.csv
-ARE&M_key_metrics_20241111.csv
-ARE&M_profit_loss_20241111.csv
+
+*_data/
+
+scrapeTest.py
+selium_test.py
+selium_test2.py
+test_script.py
+test_script_playwrite_v1.py
