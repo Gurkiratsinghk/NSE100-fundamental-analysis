@@ -1,3 +1,8 @@
+# Enteries 
+------
+### 10th Jan 2025
+Scraping strategy shifted to Playwrite. The code output was better than `scrapeTest.py`. Currently `test_scrite_playwrite_v2.py` is being developed as final file. The code still needs to get sub-entries from the tables, which I came to believe would be easy with Playwrite. *The `.log` files needs to be moved into the respective data folder.*
+
 # Things on-going
 ------
 

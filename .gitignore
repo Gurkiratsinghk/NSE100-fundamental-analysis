@@ -2,8 +2,8 @@ nse100_fa/
 *.log
 
 *_data/
+archive/
 
-scrapeTest.py
 selium_test.py
 selium_test2.py
 test_script.py

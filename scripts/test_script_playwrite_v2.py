@@ -1,20 +1,23 @@
-import requests
-from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
 import pandas as pd
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 import time
 import re
+from pathlib import Path
 
-class FinancialScraper:
+class FinancialScraperPlaywright:
     def __init__(self):
         """Initialize the scraper with necessary configurations"""
         self.base_url = "https://www.screener.in/company/"
         self.setup_logging()
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+        self.setup_data_directory()
+        
+    def setup_data_directory(self):
+        """Setup directory for storing scraped data"""
+        self.data_dir = Path('../scrapeTest_playwrite_v2_data')
+        self.data_dir.mkdir(exist_ok=True)
         
     def setup_logging(self):
         """Setup logging configuration"""
@@ -27,7 +30,6 @@ class FinancialScraper:
     def clean_number(self, value: str) -> Optional[float]:
         """Clean and convert string numbers to float"""
         try:
-            # Remove ₹, Cr., %, and commas, then convert to float
             value = str(value)
             value = value.replace('₹', '').replace('Cr.', '').replace('%', '').replace(',', '').strip()
             return float(value) if value and value != '-' else None
@@ -35,49 +37,38 @@ class FinancialScraper:
             logging.warning(f"Could not convert value: {value}")
             return None
 
-    def fetch_company_data(self, ticker: str) -> str:
-        """Fetch HTML content from screener.in"""
+    async def extract_table_data(self, page, section_id: str) -> pd.DataFrame:
+        """Extract data from a specific section using Playwright selectors"""
         try:
-            url = f"{self.base_url}{ticker}/"
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            return response.text
-        except requests.RequestException as e:
-            logging.error(f"Error fetching data for {ticker}: {e}")
-            raise
-
-    def extract_section_data(self, soup: BeautifulSoup, section_id: str) -> pd.DataFrame:
-        """Extract data from a specific section (P&L, Balance Sheet, or Cash Flow)"""
-        try:
-            section = soup.find('section', id=section_id)
+            # Wait for the section to be visible
+            section = await page.wait_for_selector(f'section#{section_id}')
             if not section:
                 raise ValueError(f"{section_id} section not found")
 
-            table = section.find('table', class_='data-table')
-            
-            # Extract headers (years)
+            # Extract headers
             headers = ['Metric']
-            for th in table.find('tr').find_all('th')[1:]:  # Skip first th (empty)
-                headers.append(th.text.strip())
+            header_elements = await page.query_selector_all(f'section#{section_id} table.data-table th')
+            for header in header_elements[1:]:  # Skip first header (empty)
+                header_text = await header.inner_text()
+                headers.append(header_text.strip())
 
             # Extract rows
             rows = []
-            for tr in table.find('tbody').find_all('tr'):
+            row_elements = await page.query_selector_all(f'section#{section_id} table.data-table tbody tr')
+            
+            for row_element in row_elements:
                 row = []
-                # Get metric name (remove any JS buttons)
-                metric_td = tr.find('td', class_='text')
-                if metric_td:
-                    metric_name = metric_td.text.strip()
-                else:
-                    metric_name = tr.find('td').text.strip()
-                    
-                # Clean up the metric name by removing any button text indicators
-                metric_name = re.sub(r'\s*[-+]\s*$', '', metric_name)
+                # Get metric name
+                metric_element = await row_element.query_selector('td.text') or await row_element.query_selector('td:first-child')
+                metric_name = await metric_element.inner_text()
+                metric_name = re.sub(r'\s*[-+]\s*$', '', metric_name.strip())
                 row.append(metric_name)
                 
                 # Get values for each year
-                for td in tr.find_all('td')[1:]:  # Skip first td (metric name)
-                    value = self.clean_number(td.text.strip())
+                value_elements = await row_element.query_selector_all('td:not(:first-child)')
+                for value_element in value_elements:
+                    value_text = await value_element.inner_text()
+                    value = self.clean_number(value_text.strip())
                     row.append(value)
                 
                 rows.append(row)
@@ -91,21 +82,26 @@ class FinancialScraper:
             logging.error(f"Error extracting {section_id} data: {e}")
             return pd.DataFrame()
 
-    def extract_growth_metrics(self, soup: BeautifulSoup) -> pd.DataFrame:
-        """Extract growth metrics tables"""
+    async def extract_growth_metrics(self, page) -> pd.DataFrame:
+        """Extract growth metrics tables using Playwright selectors"""
         try:
-            growth_tables = soup.find_all('table', class_='ranges-table')
             growth_data = {}
+            tables = await page.query_selector_all('table.ranges-table')
             
-            for table in growth_tables:
-                category = table.find('th').text.strip()
+            for table in tables:
+                category_element = await table.query_selector('th')
+                category = await category_element.inner_text()
+                category = category.strip()
                 growth_data[category] = {}
                 
-                for row in table.find_all('tr')[1:]:  # Skip header row
-                    cols = row.find_all('td')
+                rows = await table.query_selector_all('tr:not(:first-child)')
+                for row in rows:
+                    cols = await row.query_selector_all('td')
                     if len(cols) == 2:
-                        period = cols[0].text.strip().rstrip(':')
-                        value = self.clean_number(cols[1].text.strip())
+                        period = await cols[0].inner_text()
+                        period = period.strip().rstrip(':')
+                        value_text = await cols[1].inner_text()
+                        value = self.clean_number(value_text.strip())
                         growth_data[category][period] = value
 
             return pd.DataFrame(growth_data)
@@ -116,24 +112,19 @@ class FinancialScraper:
     def get_key_metrics(self, pl_data: pd.DataFrame, bs_data: pd.DataFrame, cf_data: pd.DataFrame) -> Dict[str, float]:
         """Extract key financial metrics from P&L, Balance Sheet, and Cash Flow data"""
         try:
-            latest_year = pl_data.columns[-1]  # Get the most recent year
+            latest_year = pl_data.columns[-1]
             
             metrics = {
-                # P&L Metrics
                 'Revenue': pl_data.loc['Sales', latest_year],
                 'Operating_Profit': pl_data.loc['Operating Profit', latest_year],
                 'Net_Profit': pl_data.loc['Net Profit', latest_year],
                 'EPS': pl_data.loc['EPS in Rs', latest_year],
                 'OPM': pl_data.loc['OPM %', latest_year],
-                
-                # Balance Sheet Metrics
                 'Total_Assets': bs_data.loc['Total Assets', latest_year],
                 'Total_Liabilities': bs_data.loc['Total Liabilities', latest_year],
                 'Net_Worth': bs_data.loc['Net Worth', latest_year],
                 'Book_Value': bs_data.loc['Book Value', latest_year] if 'Book Value' in bs_data.index else None,
                 'Debt_Equity': bs_data.loc['Debt/Equity', latest_year] if 'Debt/Equity' in bs_data.index else None,
-                
-                # Cash Flow Metrics
                 'Operating_Cash_Flow': cf_data.loc['Cash from Operating Activity', latest_year],
                 'Investing_Cash_Flow': cf_data.loc['Cash from Investing Activity', latest_year],
                 'Financing_Cash_Flow': cf_data.loc['Cash from Financing Activity', latest_year],
@@ -153,25 +144,26 @@ class FinancialScraper:
         
         try:
             for key, df in data.items():
-                filename = f'{company_name}_{key}_{timestamp}.csv'
+                filename = self.data_dir / f'{company_name}_{key}_{timestamp}.csv'
                 df.to_csv(filename)
                 logging.info(f"Successfully saved {key} for {company_name}")
             
         except Exception as e:
             logging.error(f"Error saving CSV files: {e}")
 
-    def scrape_company(self, ticker: str) -> Dict[str, pd.DataFrame]:
-        """Main method to scrape company data"""
+    async def scrape_company(self, page, ticker: str) -> Dict[str, pd.DataFrame]:
+        """Main method to scrape company data using Playwright"""
         try:
-            # Fetch HTML content
-            html_content = self.fetch_company_data(ticker)
-            soup = BeautifulSoup(html_content, 'html.parser')
+            # Navigate to company page
+            url = f"{self.base_url}{ticker}/"
+            await page.goto(url)
+            await page.wait_for_load_state('networkidle')
 
             # Extract data from different sections
-            pl_data = self.extract_section_data(soup, 'profit-loss')
-            bs_data = self.extract_section_data(soup, 'balance-sheet')
-            cf_data = self.extract_section_data(soup, 'cash-flow')
-            growth_metrics = self.extract_growth_metrics(soup)
+            pl_data = await self.extract_table_data(page, 'profit-loss')
+            bs_data = await self.extract_table_data(page, 'balance-sheet')
+            cf_data = await self.extract_table_data(page, 'cash-flow')
+            growth_metrics = await self.extract_growth_metrics(page)
 
             # Get key metrics
             key_metrics = self.get_key_metrics(pl_data, bs_data, cf_data)
@@ -189,34 +181,45 @@ class FinancialScraper:
             logging.error(f"Error scraping {ticker}: {e}")
             return {}
 
-def main():
+async def main():
     # Initialize scraper
-    scraper = FinancialScraper()
+    scraper = FinancialScraperPlaywright()
     
     # List of companies to scrape
     companies = ['ARE&M']  # Add more tickers as needed
     
-    for ticker in companies:
-        try:
-            print(f"\nScraping data for {ticker}...")
-            
-            # Scrape company data
-            data = scraper.scrape_company(ticker)
-            
-            if data:
-                # Save to CSV
-                scraper.save_to_csv(data, ticker)
+    playwright = await async_playwright().start()
+    browser = await playwright.chromium.launch(headless=True)
+    context = await browser.new_context()
+    page = await context.new_page()
+    
+    try:
+        for ticker in companies:
+            try:
+                print(f"\nScraping data for {ticker}...")
                 
-                # Print key metrics
-                print(f"\nKey metrics for {ticker}:")
-                print(data['key_metrics'])
+                # Scrape company data
+                data = await scraper.scrape_company(page, ticker)
                 
-            # Add delay between requests
-            time.sleep(2)
-            
-        except Exception as e:
-            logging.error(f"Error processing {ticker}: {e}")
-            print(f"Error processing {ticker}: {e}")
+                if data:
+                    # Save to CSV
+                    scraper.save_to_csv(data, ticker)
+                    
+                    # Print key metrics
+                    print(f"\nKey metrics for {ticker}:")
+                    print(data['key_metrics'])
+                    
+                # Add delay between requests
+                await page.wait_for_timeout(2000)
+                
+            except Exception as e:
+                logging.error(f"Error processing {ticker}: {e}")
+                print(f"Error processing {ticker}: {e}")
+    finally:
+        # Close browser
+        await browser.close()
+        await playwright.stop()
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
