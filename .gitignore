@@ -3,6 +3,7 @@ nse100_fa/
 
 *_data/
 archive/
+__pycache__/
 
 selium_test.py
 selium_test2.py
