@@ -106,7 +106,12 @@ def _clean_numeric_string(raw: str) -> str:
     )
 
 
-def _parse_value(raw: str) -> tuple[float | None, str | None]:
+def _parse_value(
+    raw: str,
+    default_to_crores: bool = False,
+    default_to_percentage: bool = False,
+    metric_key: str = ""
+) -> tuple[float | None, str | None]:
     """
     Parse a raw cell/field string into (value_num, value_text).
 
@@ -118,9 +123,9 @@ def _parse_value(raw: str) -> tuple[float | None, str | None]:
 
     Rules
     -----
-    - "Cr." suffix is stripped; value is stored as a plain float in crores
-    - "%" suffix is stripped; value is stored as a plain float in percentage
-      points (0.66, not 0.0066). The metric name signals the unit.
+    - "Cr." suffix is stripped; if detected or flag passed, value is multiplied by 10,000,000.
+    - "%" suffix is stripped; if detected or flag passed, value is divided by 100. 
+      The metric name signals the unit.
     - "-" or "--" are treated as NULL, not zero.
     """
     if not raw:
@@ -132,9 +137,27 @@ def _parse_value(raw: str) -> tuple[float | None, str | None]:
         return None, None
 
     try:
-        return float(cleaned), None
+        val = float(cleaned)
     except ValueError:
         return None, cleaned if cleaned else None
+        
+    is_crores = "Cr" in raw
+    is_percentage = "%" in raw or "pct" in metric_key
+
+    if default_to_crores and not is_crores:
+        skip_scaling = (is_percentage or "rs" in metric_key)
+        if not skip_scaling:
+            is_crores = True
+
+    if default_to_percentage and not is_percentage:
+        is_percentage = True
+
+    if is_crores:
+        val *= 10000000.0
+    elif is_percentage:
+        val /= 100.0
+
+    return val, None
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +188,13 @@ def _fetch_page(symbol: str) -> BeautifulSoup | None:
 #   value = container.find('p').get_text()
 # ---------------------------------------------------------------------------
 
+def _is_numeric_like(text: str) -> bool:
+    """Check if a string looks like a numeric value (e.g. '123_45', '123.45', '123')."""
+    # Remove chars we often strip during numeric parsing to see if what's left is a number
+    cleaned = text.replace("_", "").replace(".", "").replace(",", "").strip()
+    return cleaned.isdigit()
+
+
 def _parse_essentials(soup: BeautifulSoup) -> dict[str, tuple[float | None, str | None]]:
     """
     Extract every labeled metric from the #companyessentials div.
@@ -174,10 +204,6 @@ def _parse_essentials(soup: BeautifulSoup) -> dict[str, tuple[float | None, str 
             <div class="col-6 col-md-3 mb-2">
                 <small>Market Cap</small>
                 <p>5507.82 Cr.</p>
-            </div>
-            <div class="col-6 col-md-3 mb-2">
-                <small>P/E</small>
-                <p>76</p>
             </div>
             ...
         </div>
@@ -207,8 +233,11 @@ def _parse_essentials(soup: BeautifulSoup) -> dict[str, tuple[float | None, str 
         label = label_tag.get_text(strip=True)
         value = value_tag.get_text(strip=True)
 
-        # Skip blank or purely numeric labels (stray year numbers / row indices)
-        if not label or label.replace(".", "", 1).isdigit():
+        # CRITICAL FIX: Skip labels that look like numbers (e.g. '126869_54')
+        # Finology sometimes puts numeric data in the <small> tag improperly.
+        if not label or _is_numeric_like(label):
+            if label:
+                logger.debug(f"  Skipping numeric-like label: '{label}'")
             continue
 
         # Skip values that are blank or reduce to nothing after stripping units
@@ -219,7 +248,7 @@ def _parse_essentials(soup: BeautifulSoup) -> dict[str, tuple[float | None, str 
         if key in results:
             continue  # first occurrence wins
 
-        num, txt = _parse_value(value)
+        num, txt = _parse_value(value, metric_key=key)
         results[key] = (num, txt if num is None else None)
 
     logger.debug(f"  Essentials: {len(results)} clean metrics extracted.")
@@ -263,6 +292,8 @@ def _parse_table(
     { fiscal_year (int) -> { snake_case_metric -> (value_num, value_text) } }
     """
     result: dict[int, dict[str, tuple[float | None, str | None]]] = {}
+    is_financial_statement = source_label in ("profit_loss", "balance_sheet", "cash_flow")
+    is_shareholding = source_label in ("promoter_shareholding", "investor_shareholding")
 
     all_rows = table_soup.find_all("tr")
     if not all_rows:
@@ -310,7 +341,12 @@ def _parse_table(
                 break
 
             raw_value = cells[cell_idx].get_text(strip=True)
-            num, txt  = _parse_value(raw_value)
+            num, txt  = _parse_value(
+                raw_value, 
+                default_to_crores=is_financial_statement, 
+                default_to_percentage=is_shareholding,
+                metric_key=metric_key
+            )
 
             result.setdefault(fiscal_year, {})[metric_key] = (num, txt)
 
