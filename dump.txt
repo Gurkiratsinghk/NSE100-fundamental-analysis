@@ -1,0 +1,139 @@
+raw html: <div class="col-12 col-md-5">
+<h4>Company Essentials</h4>
+</div>
+raw html: <div class="col-12 col-md-7"></div>
+[2] small: 'Market Cap' | p: '₹124771.65Cr.' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>Market Cap<span class="infolink" data-tooltip="tooltip" title="Market capitalization is the aggregate valuation of the company based on its current share price and the total number of outstanding shares."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                ₹ <span class="Number">124771.65</span> Cr.
+                            </p>
+</div>
+[3] small: 'Enterprise Value' | p: '₹119263.83Cr.' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>
+<span id="mainContent_lblEPCASA">Enterprise Value</span>
+<span class="infolink" data-tooltip="tooltip" title="it measures companys total value, which includes market capitalization, debt and excludes cash."><i class="fas fa-info-circle"></i></span>
+</small>
+<p>
+<span id="mainContent_ltrlEntValue">₹ <span class="Number">119263.83</span> Cr.</span>
+</p>
+</div>
+[4] small: 'No. of Shares' | p: '21.19Cr.' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>No. of Shares<span class="infolink" data-tooltip="tooltip" title="It shows the number of shares outstanding in the company."><i class="fas fa-info-circle"></i></span></small>
+<p>
+<span class="Number">21.19</span> Cr.
+                            </p>
+</div>
+[5] small: 'P/E' | p: '74.74' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>P/E<span class="infolink" data-tooltip="tooltip" title="It is a valuation parameter that measures the company's current share price relative to its per-share earnings. Generally, high P/E is Overvalued &amp; low P/E is Undervalued."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                74.74
+                            </p>
+</div>
+[6] small: 'P/B' | p: '17.63' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>P/B<span class="infolink" data-tooltip="tooltip" title="It shows the relationship between the current price and the book value of each share. A lower P/B ratio can mean that the stock is undervalued."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                17.63
+                            </p>
+</div>
+[7] small: 'Face Value' | p: '₹ 2' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>Face Value<span class="infolink" data-tooltip="tooltip" title="Value of a security, as stated by its issuer. It has no relation with market price of the stock."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                ₹ 2
+                            </p>
+</div>
+[8] small: 'Div. Yield' | p: '0.66\r\n                                %' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>Div. Yield<span class="infolink" data-tooltip="tooltip" title="It measures the amount of cash dividends distributed to equity shareholders relative to the market value per share."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                0.66
+                                %
+                            </p>
+</div>
+[9] small: 'Book Value (TTM)' | p: '₹333.89' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>Book Value (TTM)<span class="infolink" data-tooltip="tooltip" title="It calculates the per share value of a company based on its equity available to common shareholders."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                ₹ 
+                                    <span class="Number">333.89</span>
+</p>
+</div>
+[10] small: 'CASH' | p: '₹5507.82Cr.' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>
+<span id="mainContent_lblCashNPI">CASH</span>
+<span class="infolink" data-tooltip="tooltip" title="The cash balance at the end of year after paying out dividends and expenses."><i class="fas fa-info-circle"></i></span>
+</small>
+<p>
+<span id="mainContent_ltrlCash">₹ <span class="Number">5507.82</span> Cr.</span>
+</p>
+</div>
+[11] small: 'DEBT' | p: '₹0Cr.' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>
+<span id="mainContent_lblDEBTCostToIncome">DEBT</span>
+<span class="infolink" data-tooltip="tooltip" title="It is the sum of all short term and long term debts taken by the company."><i class="fas fa-info-circle"></i></span>
+</small>
+<p>
+<span id="mainContent_ltrlDebt">₹ <span class="Number">0</span> Cr.</span>
+</p>
+</div>
+[12] small: 'Promoter Holding' | p: '75 %' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>Promoter Holding<span class="infolink" data-tooltip="tooltip" title="The % of shares that are held by the promoters of a company."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                75 %
+                            </p>
+</div>
+[13] small: 'EPS (TTM)' | p: '₹78.78' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>EPS (TTM)<span class="infolink" data-tooltip="tooltip" title="It is the profit allocated to each outstanding share of common stock."><i class="fas fa-info-circle"></i></span></small>
+<p>
+                                ₹ 
+                                    <span class="Number">78.78</span>
+</p>
+</div>
+[14] small: 'Sales Growth' | p: '16.67%' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>
+<span id="mainContent_lblSalesGrowthorCasa">Sales Growth</span>
+<span class="infolink" data-tooltip="tooltip" title="It shows the growth in sales revenues over a fixed period of time. Higher the rate, better it is."><i class="fas fa-info-circle"></i></span>
+</small>
+<p>
+<span class="Number">16.67</span>%
+                            </p>
+</div>
+[15] small: 'ROE' | p: '28.8%' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>ROE 
+                                <span class="infolink" data-tooltip="tooltip" title="It measures the ability of a firm to generate profits from its shareholders investments in the company."><i class="fas fa-info-circle"></i></span></small>
+<p>
+<span class="Number">28.8</span> %
+
+                            </p>
+</div>
+[16] small: 'ROCE' | p: '38.86%' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>ROCE<span class="infolink" data-tooltip="tooltip" title="It measures how efficiently a company is using its capital employed (Debt &amp; Equity). [Higher is better]  "><i class="fas fa-info-circle"></i></span></small>
+<p>
+<span class="Number">38.86</span>%
+
+                            </p>
+</div>
+[17] small: 'Profit Growth' | p: '50.19%' | classes: ['col-6', 'col-md-4', 'compess']
+raw html: <div class="col-6 col-md-4 compess">
+<small>Profit Growth
+                                    <span class="infolink" data-tooltip="tooltip" title="It shows the growth in Net Profit over a fixed period of time. Higher the rate, better it is."><i class="fas fa-info-circle"></i></span></small>
+<p>
+<span class="Number">50.19</span> %
+
+                            </p>
+</div>
+raw html: <div class="col-6 col-md-4 compess">
+<p><a class="manageratio float-left ml-0 d-none d-md-block" href="javascript:;" onclick="$('.selectpicker').selectpicker('toggle');">Add Your Ratio</a></p>
+</div>
